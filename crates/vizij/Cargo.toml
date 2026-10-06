@@ -29,7 +29,7 @@ bevy = "0.19"
 # 9.7 adds `with_host_module`, which registers the animation module natively (a
 # `HostModule` of in-process functions) — no wasm guest, no bindep, so the
 # workspace stays on stable.
-arora = "9.10"
+arora = "=9.10.0"
 # The ROS 2 bridge, attached under `--ros2` (feature `ros2`). Heavy (ros2-client
 # + a DDS/Zenoh backend), so opt-in; the Studio bridge rides arora's own
 # `studio-bridge` feature instead (`--studio`). It carries the skill plane the
@@ -38,7 +38,8 @@ arora = "9.10"
 # clients) and run feedback may be a record (the say skill's viseme/intensity).
 # 6.3 is where that profile publishes the face image, so the view declares
 # nothing itself.
-arora-bridge-ros2 = { version = "6.3", optional = true, default-features = false }
+arora-bridge-ros2 = { path = "/home/emorobcare/vizij_project/arora-sdk/crates/arora-bridge-ros2", optional = true, default-features = false }
+#arora-bridge-ros2 = { version = "6.3", optional = true, default-features = false }
 # The Status enumeration ids the gaze and tts contracts mark their action shapes with.
 arora-behavior-tree-types = "1"
 # The built-in key prefix the ROS 2 input declaration leaves out.

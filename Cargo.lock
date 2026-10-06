@@ -391,12 +391,12 @@ dependencies = [
 
 [[package]]
 name = "arora"
-version = "9.11.1"
+version = "9.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6738bed54ff23986e4735ca7d48439a5f71d03f40cc8eb73b4350c4c972dbd1"
+checksum = "e2876a5b088b105c8008d86225352c9518dc3d6d4ee14615d6709d6b150317fd"
 dependencies = [
  "anyhow",
- "arora-behavior",
+ "arora-behavior 8.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "arora-behavior-tree",
  "arora-bridge",
  "arora-bridge-ws",
@@ -425,6 +425,16 @@ dependencies = [
 [[package]]
 name = "arora-behavior"
 version = "8.4.0"
+dependencies = [
+ "arora-types",
+ "semver",
+ "serde",
+ "uuid",
+]
+
+[[package]]
+name = "arora-behavior"
+version = "8.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f86d18b53a934aa302e725cdc9918ef7370b5eb8e5b3262ce05b794235b57169"
 dependencies = [
@@ -441,8 +451,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e765bed1cd96ecc8d160e45baecc7237a87953c918b3e956f6c4b0ec017512a"
 dependencies = [
  "anyhow",
- "arora-behavior",
- "arora-behavior-tree-types",
+ "arora-behavior 8.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "arora-behavior-tree-types 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "arora-buffers",
  "arora-module-rust",
  "arora-registry",
@@ -460,10 +470,21 @@ dependencies = [
 [[package]]
 name = "arora-behavior-tree-types"
 version = "1.1.0"
+dependencies = [
+ "arora-behavior 8.4.0",
+ "arora-types",
+ "lazy_static",
+ "semver",
+ "uuid",
+]
+
+[[package]]
+name = "arora-behavior-tree-types"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ab6baa6ebdc6ff637d5231f6a969a17970ac5aa8959db57e2abf3b09ce9f218"
 dependencies = [
- "arora-behavior",
+ "arora-behavior 8.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "arora-types",
  "lazy_static",
  "semver",
@@ -473,8 +494,6 @@ dependencies = [
 [[package]]
 name = "arora-bridge"
 version = "4.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7848310653e25a84361cae07d1131f540b528f959e593e815e3e6a8a8f52859"
 dependencies = [
  "arora-types",
  "async-trait",
@@ -487,12 +506,10 @@ dependencies = [
 [[package]]
 name = "arora-bridge-ros2"
 version = "6.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48983408225230113d4164952908e00250dfde3040895bbfd12342d796223a4e"
 dependencies = [
- "arora-behavior-tree-types",
+ "arora-behavior-tree-types 1.1.0",
  "arora-bridge",
- "arora-msgs-ros2",
+ "arora-msgs-ros2 1.2.0",
  "arora-types",
  "async-trait",
  "futures",
@@ -657,13 +674,26 @@ dependencies = [
 [[package]]
 name = "arora-msgs-ros2"
 version = "1.2.0"
+dependencies = [
+ "arora-types",
+ "proc-macro2",
+ "quote",
+ "ros2-client-multi-rmw",
+ "serde",
+ "serde-big-array",
+ "serde_json",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "arora-msgs-ros2"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7283b5bb41f917e65b7d8ad8a64e80d5d136f8aa3b051a9be784bf3f016afc30"
 dependencies = [
  "arora-types",
  "proc-macro2",
  "quote",
- "ros2-client-multi-rmw",
  "serde",
  "serde-big-array",
  "serde_json",
@@ -730,8 +760,6 @@ dependencies = [
 [[package]]
 name = "arora-types"
 version = "2.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2491177064427d29fb44a2d86097b59e8f04eb09f2c12d74b8c7e220c2d8a893"
 dependencies = [
  "arora-types-derive",
  "async-trait",
@@ -748,12 +776,10 @@ dependencies = [
 [[package]]
 name = "arora-types-derive"
 version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0622342550b0cc1e349e3c09c0c8c374bbe4d5a5c4c4938d40abe076a7c53d51"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.119",
+ "syn 3.0.5",
  "uuid",
 ]
 
@@ -11142,10 +11168,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "arora",
- "arora-behavior",
- "arora-behavior-tree-types",
+ "arora-behavior 8.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "arora-behavior-tree-types 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "arora-bridge-ros2",
- "arora-msgs-ros2",
+ "arora-msgs-ros2 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "arora-types",
  "bevy",
  "clap 4.6.6",
@@ -11259,8 +11285,8 @@ dependencies = [
 name = "vizij-arora-behavior"
 version = "1.1.0"
 dependencies = [
- "arora-behavior",
- "arora-behavior-tree-types",
+ "arora-behavior 8.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "arora-behavior-tree-types 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "arora-simple-data-store",
  "arora-types",
  "log",
@@ -11291,8 +11317,8 @@ name = "vizij-arora-host"
 version = "2.1.0"
 dependencies = [
  "anyhow",
- "arora-behavior",
- "arora-msgs-ros2",
+ "arora-behavior 8.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "arora-msgs-ros2 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "arora-types",
  "log",
  "serde",
@@ -11322,6 +11348,7 @@ dependencies = [
  "tokio",
  "uuid",
  "vizij-arora-behavior",
+ "vizij-arora-store",
  "vizij-graph-core",
 ]
 
@@ -11372,7 +11399,7 @@ name = "vizij-graph-core"
 version = "1.4.0"
 dependencies = [
  "anyhow",
- "arora-behavior",
+ "arora-behavior 8.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "criterion",
  "hashbrown 0.17.1",
  "k",

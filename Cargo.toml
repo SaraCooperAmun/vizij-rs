@@ -41,3 +41,7 @@ serde-wasm-bindgen = "0.6"
 opt-level = "s"
 lto = true
 codegen-units = 1
+
+[patch.crates-io]
+arora-bridge = { path = "/home/emorobcare/vizij_project/arora-sdk/crates/arora-bridge" }
+arora-types = { path = "/home/emorobcare/vizij_project/arora-sdk/crates/arora-types" }

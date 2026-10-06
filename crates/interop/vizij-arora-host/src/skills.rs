@@ -234,7 +234,7 @@ pub fn generate_look_at() -> Json {
         "simplenoise",
         json!({
             "noise_seed": 31.0,
-            "frequency": 0.20,
+            "frequency": 0.12,
             "octaves": 1.0
         }),
         &[("x", &idle_time), ("y", &zero)],

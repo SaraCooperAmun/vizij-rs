@@ -36,6 +36,52 @@
       }
     },
     {
+      "id": "const/1",
+      "type": "constant",
+      "params": {
+        "value": 1.0
+      }
+    },
+    {
+      "id": "const/2",
+      "type": "constant",
+      "params": {
+        "value": 2.0
+      }
+    },
+    {
+      "id": "const/-1",
+      "type": "constant",
+      "params": {
+        "value": -1.0
+      }
+    },
+    {
+      "id": "gaze/input/x",
+      "type": "vectorindex",
+      "params": {}
+    },
+    {
+      "id": "gaze/input/y",
+      "type": "vectorindex",
+      "params": {}
+    },
+    {
+      "id": "gaze/input/y/flipped",
+      "type": "multiply",
+      "params": {}
+    },
+    {
+      "id": "gaze/input/z",
+      "type": "vectorindex",
+      "params": {}
+    },
+    {
+      "id": "gaze/input/target/flipped",
+      "type": "join",
+      "params": {}
+    },
+    {
       "id": "gaze/rest_target",
       "type": "constant",
       "params": {
@@ -122,13 +168,6 @@
       }
     },
     {
-      "id": "const/2",
-      "type": "constant",
-      "params": {
-        "value": 2.0
-      }
-    },
-    {
       "id": "gaze/idle/y/raw",
       "type": "multiply",
       "params": {}
@@ -147,13 +186,6 @@
         "noise_seed": 31.0,
         "frequency": 0.2,
         "octaves": 1.0
-      }
-    },
-    {
-      "id": "const/1",
-      "type": "constant",
-      "params": {
-        "value": 1.0
       }
     },
     {
@@ -360,6 +392,105 @@
     }
   ],
   "edges": [
+    {
+      "from": {
+        "node_id": "in/target"
+      },
+      "to": {
+        "node_id": "gaze/input/x",
+        "input": "v"
+      }
+    },
+    {
+      "from": {
+        "node_id": "const/0"
+      },
+      "to": {
+        "node_id": "gaze/input/x",
+        "input": "index"
+      }
+    },
+    {
+      "from": {
+        "node_id": "in/target"
+      },
+      "to": {
+        "node_id": "gaze/input/y",
+        "input": "v"
+      }
+    },
+    {
+      "from": {
+        "node_id": "const/1"
+      },
+      "to": {
+        "node_id": "gaze/input/y",
+        "input": "index"
+      }
+    },
+    {
+      "from": {
+        "node_id": "gaze/input/y"
+      },
+      "to": {
+        "node_id": "gaze/input/y/flipped",
+        "input": "operand_0"
+      }
+    },
+    {
+      "from": {
+        "node_id": "const/-1"
+      },
+      "to": {
+        "node_id": "gaze/input/y/flipped",
+        "input": "operand_1"
+      }
+    },
+    {
+      "from": {
+        "node_id": "in/target"
+      },
+      "to": {
+        "node_id": "gaze/input/z",
+        "input": "v"
+      }
+    },
+    {
+      "from": {
+        "node_id": "const/2"
+      },
+      "to": {
+        "node_id": "gaze/input/z",
+        "input": "index"
+      }
+    },
+    {
+      "from": {
+        "node_id": "gaze/input/x"
+      },
+      "to": {
+        "node_id": "gaze/input/target/flipped",
+        "input": "operand_0"
+      }
+    },
+    {
+      "from": {
+        "node_id": "gaze/input/y/flipped"
+      },
+      "to": {
+        "node_id": "gaze/input/target/flipped",
+        "input": "operand_1"
+      }
+    },
+    {
+      "from": {
+        "node_id": "gaze/input/z"
+      },
+      "to": {
+        "node_id": "gaze/input/target/flipped",
+        "input": "operand_2"
+      }
+    },
     {
       "from": {
         "node_id": "gaze/idle/time"
@@ -614,7 +745,7 @@
     },
     {
       "from": {
-        "node_id": "in/target"
+        "node_id": "gaze/input/target/flipped"
       },
       "to": {
         "node_id": "gaze/target",

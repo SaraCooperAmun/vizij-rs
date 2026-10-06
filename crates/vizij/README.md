@@ -69,19 +69,13 @@ WS bridge):
 `--ros2` attaches [`arora-bridge-ros2`](https://github.com/semio-ai/arora-sdk/tree/main/crates/arora-bridge-ros2)
 with its ROS4HRI exposure preset:
 
-- the typed face topics — `/robot_face/{look_at,tts}` and
-  `/skill/set_expression` — routed onto the `ros4hri` profile's
+- the typed face topics — `/robot_face/{expression,look_at,tts}` and
+  `/expressive_face/{look_at,speech}` — routed onto the `ros4hri` profile's
   `standard/ros4hri/*` keys;
 - the **`/<namespace>/actions/{play_viseme,say}`** action servers, synthesized
   from the viseme players' signatures ([skills](../../docs/skills.md));
 - the **`/skill/look_at`** action server (`interaction_skills/LookAt`):
   track / glance / reset policies, priority preemption, standard error codes;
-- the **`/skill/set_expression`** expression input 
-  (interaction_skills/  SetExpression):
-  when an expression name is provided, arousal is used directly as the
-  selected Vizij expression's intensity (0..1); when the expression name is
-  empty, valence and arousal drive the normal ROS4HRI circumplex mapping
-  (arousal remains -1..1);
 - the **face image** on the `image_transport` pair PAL OS documents:
   `display/face/compressed` as a `sensor_msgs/CompressedImage` on
   `/robot_face/image_raw/compressed` (`--frame-format png`, the default), or
@@ -194,88 +188,6 @@ working-space floats (three `Color.setRGB` semantics), not sRGB.
 
 Verified pixel-exact against the web renderer on flat regions of both
 reference faces.
-
-
-## Look-at policies
-
-The ROS4HRI `/skill/look_at` action is implemented by the `look_at` skill fragment in `crates/interop/vizij-arora-host/src/skills.rs`. Its generated graph is committed as `crates/interop/vizij-arora-host/skills/look_at.json`.
-
-The currently supported policies are:
-
-* **`track`** — continuously looks at the supplied `target` and `frame` until the goal is cancelled or replaced.
-* **`glance`** — looks at the supplied target, holds the fixation briefly, then succeeds.
-* **`reset`** — returns the gaze to the forward/rest target, holds briefly, then succeeds.
-* **`idle`** — continuously wanders around the forward direction with smooth, relatively regular movement.
-* **`random`** — continuously wanders with a more variable, sporadic trajectory.
-
-### Adding or changing a policy
-
-Policy behavior is defined in `generate_look_at()` in `crates/interop/vizij-arora-host/src/skills.rs`.
-
-For a new continuous policy:
-
-1. Create the policy's target trajectory in `generate_look_at()`.
-2. Add the policy to the `gaze/target` and `gaze/frame` `case` nodes.
-3. Add the policy to the lifecycle `status` case and connect it to `status/running`.
-4. Add the policy to the `errno` case as a supported policy.
-5. Update the policy description/comments if needed.
-6. Regenerate the committed asset.
-
-The generated `look_at.json` should not be edited manually. Regenerate it from the Rust generator with:
-
-```bash
-cd ~/vizij_project/vizij-rs
-
-cargo run -p vizij-bundle -- export-skill look_at \
-  -o /tmp/look_at.json
-
-cp /tmp/look_at.json \
-  crates/interop/vizij-arora-host/skills/look_at.json
-```
-
-Then verify that the generated asset matches the generator:
-
-```bash
-cargo test -p vizij-arora-host --lib \
-  skills::tests::committed_asset_matches_the_generator
-```
-
-### Tuning `idle` and `random`
-
-The gaze target uses the standard ROS point convention:
-
-* **X** = forward/backward. The gaze currently keeps X fixed at `10.0`, so it is not used to control movement speed.
-* **Y** = horizontal gaze, left/right.
-* **Z** = vertical gaze, up/down.
-
-For `idle`, the Y and Z trajectories are generated with `simplenoise` and then smoothed with `damp`. Increasing the **frequency** makes the gaze move faster; the amplitudes control how far it moves.
-
-For example:
-
-```rust
-// Y = horizontal speed
-"frequency": 0.25,
-
-// Z = vertical speed
-"frequency": 0.20,
-```
-
-The `idle` damping keeps this movement smooth and natural.
-
-For `random`, the same Y/Z frequency parameters control the overall rate, but the noise trajectory naturally produces more variation in instantaneous speed:
-
-```rust
-// Y = horizontal speed
-"frequency": 0.45,
-
-// Z = vertical speed
-"frequency": 0.32,
-```
-
-The random amplitudes can be changed separately when a larger or smaller gaze range is desired.
-
-After **any change to these parameters**, regenerate `look_at.json` with `vizij-bundle` as shown above. The runtime uses the generated asset, while the generator in `skills.rs` remains the source of truth.
-
 
 ## Comparison harness
 
