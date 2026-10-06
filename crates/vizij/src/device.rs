@@ -86,6 +86,7 @@ pub struct FaceConfig {
     /// leaves a plain ROS 2 device, its keys under `/{namespace}/keys/…` and
     /// nothing on the ROS4HRI names.
     pub ros4hri: bool,
+    pub tts: bool,
 }
 
 /// The bridges the device serves beyond the always-on open local bridge — a
@@ -316,7 +317,7 @@ pub fn start(glb: &Path, config: FaceConfig, bridges: BridgeConfig, mode: Mode) 
                     if config.stage_neutral {
                         stage_neutral_pose(&store, &meta);
                     }
-                    let Some(builder) = builder_for(&spec, rig, store, &meta.bundle.skills) else {
+                    let Some(builder) = builder_for(&spec, rig, store, &meta.bundle.skills, config.tts) else {
                         return;
                     };
                     match builder.build() {
@@ -346,6 +347,7 @@ pub(crate) fn builder_for(
     rig: RigHal,
     store: BlackboardStore,
     embedded_skills: &[(String, serde_json::Value)],
+    tts: bool,
 ) -> Option<arora::AroraBuilder> {
     let rig_prefix = rig_prefix_of(spec);
     let spec = match parse_spec(spec) {
@@ -362,11 +364,22 @@ pub(crate) fn builder_for(
             return None;
         }
     };
+
     // Route the animation source's `step`/`player_states` handles (and any
     // in-process transport call) to the host module registered below, and the
     // say skill's hosted `say` call to this build's text-to-speech provider.
+    // Route the animation source's `step`/`player_states` handles.
     let mut function_modules = animation::function_modules();
-    function_modules.insert(speech::SAY_ID, tts_module_id());
+
+    if tts {
+        function_modules.insert(speech::SAY_ID, tts_module_id());
+
+        graph.set_task_fragment(
+            speech::SAY_ID,
+            speech::say_fragment_from(embedded_skills, &rig_prefix),
+        );
+    }
+
     graph.set_function_modules(function_modules);
     // The skills: each described contract rides its host module; the
     // behavior is the shipped fragment the interpreter grafts per run — or
@@ -380,10 +393,7 @@ pub(crate) fn builder_for(
         viseme::PLAY_VISEME_ID,
         viseme::play_viseme_fragment_from(embedded_skills, &rig_prefix),
     );
-    graph.set_task_fragment(
-        speech::SAY_ID,
-        speech::say_fragment_from(embedded_skills, &rig_prefix),
-    );
+
     let builder = arora::Arora::builder()
         .with_hal(Box::new(rig))
         .with_data_store(Box::new(store.clone()))
@@ -391,14 +401,18 @@ pub(crate) fn builder_for(
         .with_host_module(animation::host_module())
         .with_host_module(gaze::host_module())
         .with_host_module(viseme::host_module());
-    // The TTS module: the `say` provider behind the say skill (poll-on-tick,
-    // viseme out-param). One provider per build, same contract: the cloud
-    // provider by default, the local Piper provider under `tts-piper`.
-    #[cfg(not(feature = "tts-piper"))]
-    let builder = builder.with_host_module(tts::host_module(store.clone()));
-    #[cfg(feature = "tts-piper")]
-    let builder = builder.with_host_module(tts_piper::host_module());
-    Some(builder)
+
+    if tts {
+        #[cfg(not(feature = "tts-piper"))]
+        let builder = builder.with_host_module(tts::host_module(store.clone()));
+
+        #[cfg(feature = "tts-piper")]
+        let builder = builder.with_host_module(tts_piper::host_module());
+
+        Some(builder)
+    } else {
+        Some(builder)
+    }
 }
 
 /// The prefix the face's standard controls live under in `spec` —
@@ -491,7 +505,7 @@ fn supervise(
         if config.stage_neutral {
             stage_neutral_pose(&store, &meta);
         }
-        let Some(builder) = builder_for(&spec, rig, store, &meta.bundle.skills) else {
+        let Some(builder) = builder_for(&spec, rig, store, &meta.bundle.skills, config.tts) else {
             return;
         };
         let (stop_tx, stop_rx) = futures::channel::oneshot::channel();
@@ -653,7 +667,7 @@ mod tests {
         let spec = compose_sources(&[animations_source()])
             .expect("compose the animation source")
             .to_string();
-        let mut arora = builder_for(&spec, RigHal::new(), BlackboardStore::new(), &[])
+        let mut arora = builder_for(&spec, RigHal::new(), BlackboardStore::new(), &[], true)
             .expect("build the device over the loaded animation module")
             .build()
             .expect("build arora");
@@ -705,6 +719,7 @@ mod tests {
             RigHal::new(),
             BlackboardStore::new(),
             &[],
+            true
         )
         .expect("build the device")
         .with_host_module(gaze)
@@ -768,6 +783,7 @@ mod tests {
             RigHal::new(),
             BlackboardStore::new(),
             &[],
+            true
         )
         .expect("build the device")
         .build()
@@ -858,6 +874,7 @@ mod tests {
             RigHal::new(),
             BlackboardStore::new(),
             &embedded,
+            true
         )
         .expect("build the device")
         .build()
@@ -910,7 +927,7 @@ mod tests {
         let spec = compose_sources(&[ros4hri_source("")])
             .expect("compose the ros4hri mapping")
             .to_string();
-        builder_for(&spec, RigHal::new(), BlackboardStore::new(), &[])
+        builder_for(&spec, RigHal::new(), BlackboardStore::new(), &[], true)
             .expect("build the device over the mapping")
             .build()
             .expect("build arora")
@@ -974,7 +991,7 @@ mod tests {
             )
             .expect("compose the face with its embedded mapping")
             .to_string();
-        let mut arora = builder_for(&spec, RigHal::new(), BlackboardStore::new(), &[])
+        let mut arora = builder_for(&spec, RigHal::new(), BlackboardStore::new(), &[], true)
             .expect("build the device over the composed face")
             .build()
             .expect("build arora");
@@ -1399,11 +1416,12 @@ mod tests {
             program: ProgramSelect::None,
             stage_neutral: true,
             ros4hri: true,
+            tts: true,
         };
         let (_, meta, spec) = load_face(&path, &config).expect("load the adapted face");
         let store = BlackboardStore::new();
         stage_neutral_pose(&store, &meta);
-        let mut arora = builder_for(&spec, RigHal::new(), store, &[])
+        let mut arora = builder_for(&spec, RigHal::new(), store, &[], true)
             .expect("build the device")
             .build()
             .expect("build arora");

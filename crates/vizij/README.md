@@ -202,6 +202,60 @@ ros2 topic pub --once /<namespace>/keys/rig/<faceId>/standard/vizij/viseme/aa \
 ROS4HRI `/robot_face/tts` topic lands text on the `standard/ros4hri/speech/text`
 key, which nothing routes into `say` yet.
 
+### External TTS
+
+Vizij can run without its built-in TTS implementation using `--no-tts`. This is useful when speech is provided by an external ROS 2 node or skill.
+
+With `--no-tts`, Vizij does not install the built-in `say` behavior or TTS host module. The face can still consume viseme feedback published on `/tts/visemes`.
+
+The intended architecture is:
+
+```text
+/skill/say
+    ↓
+External speech / TTS node
+    ↓
+/tts/visemes
+    ↓
+Vizij face
+```
+
+Start Vizij with:
+
+```bash
+ZENOH_CONFIG_OVERRIDE='mode="client";connect/endpoints=["tcp/127.0.0.1:7447"]' \
+./target/debug/vizij \
+  --glb /home/emorobcare/Quori_Latest_ROS.glb \
+  --ros2 quori \
+  --frame-rate 2 \
+  --no-autoplay \
+  --no-tts
+```
+
+The `/tts/visemes` topic uses `hri_msgs/msg/Visemes`:
+
+```text
+Viseme[] visemes
+```
+
+where each viseme contains:
+
+```text
+uint8 value
+float32 time
+float32 duration
+```
+
+For example, to manually trigger an `AA` viseme:
+
+```bash
+ros2 topic pub --once /tts/visemes hri_msgs/msg/Visemes \
+  "{visemes: [{value: 10}]}"
+```
+
+This allows the speech/TTS system to be separated from the Vizij face while keeping viseme-driven lip synchronization.
+
+
 ## Lighting model
 
 The web renders `MeshStandardMaterial` under a single `ambientLight(π/2)`,

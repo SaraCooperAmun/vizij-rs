@@ -51,6 +51,8 @@ struct Cli {
     #[arg(long, default_value = "763x486")]
     size: String,
 
+    #[arg(long)]
+    no_tts: bool,
     /// Background clear color, hex RRGGBB. (The web comparison harness passes
     /// 101114, the web page's own background.)
     #[arg(long, default_value = "000000")]
@@ -176,6 +178,7 @@ fn main() -> Result<()> {
         program,
         stage_neutral: !cli.no_stage_neutral,
         ros4hri: !cli.no_ros4hri,
+        tts: !cli.no_tts,
     };
     let bridges = device::BridgeConfig {
         #[cfg(any(feature = "ros2-dds", feature = "ros2-zenoh"))]
