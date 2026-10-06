@@ -66,39 +66,65 @@ WS bridge):
 | `--ros2 [namespace][:domain]` | `ros2-dds` (alias `ros2`) or `ros2-zenoh` | join the ROS graph as a ROS4HRI face (see below) |
 | `--studio` | `studio` | attach the Semio Studio bridge (configured from the environment) |
 
-`--ros2` attaches [`arora-bridge-ros2`](https://github.com/semio-ai/arora-sdk/tree/main/crates/arora-bridge-ros2)
-with its ROS4HRI exposure preset:
+`--ros2` attaches [`arora-bridge-ros2`](https://github.com/semio-ai/arora-sdk/tree/main/crates/arora-bridge-ros2) with its ROS4HRI exposure preset:
 
-- the typed face topics — `/robot_face/{expression,look_at,tts}` and
-  `/expressive_face/{look_at,speech}` — routed onto the `ros4hri` profile's
-  `standard/ros4hri/*` keys;
-- the **`/<namespace>/actions/{play_viseme,say}`** action servers, synthesized
-  from the viseme players' signatures ([skills](../../docs/skills.md));
-- the **`/skill/look_at`** action server (`interaction_skills/LookAt`):
-  track / glance / reset policies, priority preemption, standard error codes;
-- the **face image** on the `image_transport` pair PAL OS documents:
-  `display/face/compressed` as a `sensor_msgs/CompressedImage` on
-  `/robot_face/image_raw/compressed` (`--frame-format png`, the default), or
-  `display/face` as a `sensor_msgs/Image` on `/robot_face/image_raw` (`raw`);
-- data topics under `/<namespace>/keys/<path>`: every store key **published**,
-  and the face's **free inputs** — input paths no graph in the composition
-  writes — **subscribed** as `std_msgs` (`Float64` for numeric controls,
-  `String`/`Bool` by the input's default; `ros2 topic info -v` shows each).
-  Keys a graph writes every step (the ROS4HRI profile's `standard/vizij/*`
-  outputs, the autoplaying program's outputs) are not inputs: drive them
-  through the ROS4HRI topics or the program's own inputs.
+* the typed face topics — `/robot_face/{look_at,tts}` — routed onto the `ros4hri` profile's `standard/ros4hri/*` keys;
+* the **`/skill/set_expression`** action server (`interaction_skills/SetExpression`). When an expression name is provided, its `arousal` value is used directly as the selected Vizij expression's intensity, in the range `0..1`. When the expression name is empty, `valence` and `arousal` are used for the normal ROS4HRI circumplex mapping, with `arousal` retaining its `-1..1` range;
+* the **`/<namespace>/actions/{play_viseme,say}`** action servers, synthesized from the viseme players' signatures ([skills](../../docs/skills.md));
+* the **`/skill/look_at`** action server (`interaction_skills/LookAt`), with the policies `track`, `glance`, `reset`, `idle`, and `random`. `track` continuously follows the supplied target; `glance` looks at the target for a short fixation and succeeds; `reset` returns the gaze to the forward/rest target; `idle` produces smooth, relatively regular wandering; and `random` produces a more variable wandering trajectory. Continuous policies support priority preemption;
+* the **`/tts/visemes`** subscriber (`hri_msgs/msg/Visemes`), which receives timed viseme sequences and drives the face's viseme inputs. Each message contains a `visemes` array; each element specifies a viseme `value`, `time`, and `duration`. 
+* the **face image** on the `image_transport` pair documented by PAL OS: `display/face/compressed` as a `sensor_msgs/CompressedImage` on `/robot_face/image_raw/compressed` (`--frame-format png`, the default), or `display/face` as a `sensor_msgs/Image` on `/robot_face/image_raw` (`raw`);
+* data topics under `/<namespace>/keys/<path>`: every store key **published**, and the face's **free inputs** — input paths no graph in the composition writes — **subscribed** as `std_msgs` (`Float64` for numeric controls, `String`/`Bool` by the input's default; `ros2 topic info -v` shows each). Keys a graph writes every step (the ROS4HRI profile's `standard/vizij/*` outputs, the autoplaying program's outputs) are not inputs: drive them through the ROS4HRI topics or the program's own inputs.
 
-The two RMW backends are mutually exclusive per build. `ros2-dds` speaks
-DDS, ROS 2's default (`ros2` is its alias). `ros2-zenoh` speaks rmw_zenoh's
-protocol and, like rmw_zenoh, needs a running router (`ros2 run rmw_zenoh_cpp
-rmw_zenohd`), reached through the same environment rmw_zenoh reads —
-`ZENOH_CONFIG_OVERRIDE='mode="client";connect/endpoints=["tcp/127.0.0.1:7447"]'`
-or a full `ZENOH_SESSION_CONFIG_URI`. The live ROS tests run under `ros2-dds`.
+The two RMW backends are mutually exclusive per build. `ros2-dds` speaks DDS, ROS 2's default (`ros2` is its alias). `ros2-zenoh` speaks rmw_zenoh's protocol and, like rmw_zenoh, needs a running router (`ros2 run rmw_zenoh_cpp rmw_zenohd`), reached through the same environment rmw_zenoh reads — `ZENOH_CONFIG_OVERRIDE='mode="client";connect/endpoints=["tcp/127.0.0.1:7447"]'` or a full `ZENOH_SESSION_CONFIG_URI`. The live ROS tests run under `ros2-dds`.
 
-[ROS4HRI support](../../docs/ros4hri.md) documents the key contract, the
-per-channel behavior, how to drive a key from a ROS 2 shell, how to join a
-real graph over rmw_zenoh, and the skill's
-semantics.
+[ROS4HRI support](../../docs/ros4hri.md) documents the key contract, the per-channel behavior, expression intensity, gaze policies, viseme input, how to drive a key from a ROS 2 shell, how to join a real graph over rmw_zenoh, and the skill semantics.
+
+## ROS4HRI visemes
+
+The native face subscribes to **`/tts/visemes`** using `hri_msgs/msg/Visemes`. A message contains a sequence of timed visemes:
+
+```text
+Visemes
+  visemes[]
+    value
+    time
+    duration
+```
+
+The supported viseme values are:
+
+| Value | Viseme |
+| ----: | ------ |
+|   `0` | `SIL`  |
+|   `1` | `PP`   |
+|   `2` | `FF`   |
+|   `3` | `TH`   |
+|   `4` | `DD`   |
+|   `5` | `KK`   |
+|   `6` | `CH`   |
+|   `7` | `SS`   |
+|   `8` | `NN`   |
+|   `9` | `RR`   |
+|  `10` | `AA`   |
+|  `11` | `E`    |
+|  `12` | `IH`   |
+|  `13` | `OH`   |
+|  `14` | `OU`   |
+
+A message can contain a single viseme or a sequence. A single value can therefore be sent as one array element, while a complete speech utterance can provide multiple elements with their timing information.
+
+For example, a single `AA` viseme can be published as:
+
+```bash
+ros2 topic pub --once /tts/visemes hri_msgs/msg/Visemes \
+  "{visemes: [{value: 10}]}"
+```
+
+For timed sequences, each element provides its `value`, `time`, and `duration`. The face consumes the sequence and applies the corresponding Vizij viseme inputs at the requested timing.
+
+This topic is the ROS4HRI viseme-feedback path used by the Vizij face bridge as well as the native face. It is separate from `/robot_face/tts`: `/robot_face/tts` currently exposes speech text, while `/tts/visemes` provides the actual viseme timing used for lip synchronization.
+
 
 ## Speech (TTS)
 
